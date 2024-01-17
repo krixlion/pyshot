@@ -8,11 +8,11 @@ Similarly to Windows 10 built-in Snipping tool, PyShot can make a screenshot whe
 
 ## Requirements
 
-This projects runs on Windows 10 or Windows 11 and requires Python 3 installed (written using python 3.12.1, tested on Windows 10).
+This projects runs on Windows 10 or Windows 11 and requires Python 3 installed (written using Python 3.12.1, tested on Windows 10).
 
 ## Installation
 
-Create and activate a [virtual environment](https://docs.python.org/3/library/venv.html):
+(Optional) Create and activate a [virtual environment](https://docs.python.org/3/library/venv.html):
 ```powershell
 make init
 

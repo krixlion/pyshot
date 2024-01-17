@@ -25,12 +25,12 @@ class MouseTracker():
 
     def __init__(self, canvas: tk.Canvas):
         self.canvas = canvas
-        canv_width = self.canvas.cget('width')
-        canv_height = self.canvas.cget('height')
+        width = self.canvas.cget('width')
+        height = self.canvas.cget('height')
 
         # Create canvas cross-hair lines.
         xhair_opts = dict(dash=(3, 2), fill='white', state=tk.HIDDEN)
-        self.lineIds = (self.canvas.create_line(0, 0, 0, canv_height, **xhair_opts), self.canvas.create_line(0, 0, canv_width,  0, **xhair_opts))
+        self.lineIds = (self.canvas.create_line(0, 0, 0, height, **xhair_opts), self.canvas.create_line(0, 0, width,  0, **xhair_opts))
 
     def register(self, updateHandler=lambda start, end: None, quitHandler=lambda: None):
         """ Registers canvas handlers listening for mouse events. """
@@ -70,12 +70,11 @@ class MouseTracker():
 
 class Selection:
     """ 
-    Widget to display a rectangular area on given canvas defined by two points
-    representing its diagonal.
+    Widget to display a rectangular selection area on given canvas
+    defined by two points representing its diagonal.
     """
     
     def __init__(self, canvas: tk.Canvas, outer_opts):
-        # Create attributes needed to display selection.
         self.canvas = canvas
         width = self.canvas.cget('width')
         height = self.canvas.cget('height')
@@ -108,7 +107,8 @@ class Selection:
 
         self.canvas.coords(self.rects[4], d1[0], d1[1],  d2[0], d2[1]), # Selection rectangle.
 
-        for rect in self.rects:  # Make sure all are now visible.
+        # Make sure all areas are visible.
+        for rect in self.rects:  
             self.canvas.itemconfigure(rect, state=tk.NORMAL)
 
     def getImage(self):
@@ -119,8 +119,10 @@ class Selection:
 
 
 class ImageCropper():
-
+    
     def __init__(self, title: str, bgColor: str, img: Image):
+        
+        # Init main window.
         self.window = tk.Tk()
         self.window.title(title)
         self.window.geometry('%sx%s' % (img.width, img.height))
@@ -128,6 +130,7 @@ class ImageCropper():
         self.window.attributes('-topmost', True) # Make the window appear on top.
         self.window.attributes('-fullscreen', True)
 
+        # Convert the image to a Tkinter-compatible format.
         photo_img = ImageTk.PhotoImage(img)
 
         self.canvas = tk.Canvas(self.window, width=photo_img.width(), height=photo_img.height(), cursor='tcross', highlightbackground='red', highlightthickness=1, borderwidth=0)
@@ -141,9 +144,9 @@ class ImageCropper():
         
         self.selection = Selection(self.canvas, select_opts)
 
-        MouseTracker(self.canvas).register(self.selection.updateCoords, self.teardown)
+        MouseTracker(self.canvas).register(self.selection.updateCoords, self.quit)
 
-    def teardown(self):
+    def quit(self):
         """ Saves the selected area to clipboard and closes the window. """
         
         save_image_to_clipboard(self.selection.getImage())
