@@ -5,6 +5,7 @@ from io import BytesIO
 from PIL import Image, ImageTk, ImageGrab
 
 def save_image_to_clipboard(img: Image):
+    # Convert image to format compatible with win32 API.
     buffer = BytesIO()
     img.convert('RGB').save(buffer, 'BMP')
     data = buffer.getvalue()[14:]
@@ -19,7 +20,7 @@ def save_image_to_clipboard(img: Image):
 class MouseTracker():
     """
     Tkinter Canvas mouse position widget.
-    It's responsible of tracking cursor coordinates and displaying cross-hair lines.
+    It's responsible for tracking cursor coordinates and displaying cross-hair lines.
     """
 
     def __init__(self, canvas: tk.Canvas):
@@ -31,18 +32,8 @@ class MouseTracker():
         xhair_opts = dict(dash=(3, 2), fill='white', state=tk.HIDDEN)
         self.lineIds = (self.canvas.create_line(0, 0, 0, canv_height, **xhair_opts), self.canvas.create_line(0, 0, canv_width,  0, **xhair_opts))
 
-    def hide(self):
-        for lineId in self.lineIds:
-            self.canvas.itemconfigure(lineId, state=tk.HIDDEN)
-
-    def show(self):
-        for lineId in self.lineIds:
-            self.canvas.itemconfigure(lineId, state=tk.NORMAL)
-
     def register(self, updateHandler=lambda start, end: None, quitHandler=lambda: None):
-        """
-        Registers canvas handlers listening for mouse events.
-        """
+        """ Registers canvas handlers listening for mouse events. """
         
         self.updateHandler = updateHandler
         self.quitHandler = quitHandler
@@ -51,33 +42,36 @@ class MouseTracker():
         self.canvas.bind("<ButtonRelease-1>", self.quit) # When LMB is released.
     
     def saveStartCoords(self, event: tk.Event):
-        """
-        Saves coords of the point where LMB was pressed.
-        """
+        """ Saves coords of the point where LMB was pressed. """
         
         self.start = (event.x, event.y)  
 
     def updateXHair(self, event: tk.Event):
-        """
-        Renders cross-hair lines and invokes previously saved handler.
-        """
+        """ Renders cross-hair lines and invokes previously saved handler. """
 
         self.canvas.coords(self.lineIds[0], event.x, 0, event.x, self.canvas.cget('height'))
         self.canvas.coords(self.lineIds[1], 0, event.y, self.canvas.cget('width'), event.y)
-        self.show()
+        
+        # Display cross-hairs.
+        for lineId in self.lineIds:
+            self.canvas.itemconfigure(lineId, state=tk.NORMAL)
+            
         self.updateHandler(self.start, (event.x, event.y))  # User callback.
 
     def quit(self, event: tk.Event): # Must match this signature.
-        """
-        Hides cross-hair lines and invokes previously saved handler.
-        """
-        self.hide()  # Hide cross-hairs.
+        """ Hides cross-hair lines and invokes previously saved handler. """
+        
+        # Hide cross-hairs.
+        for lineId in self.lineIds:
+            self.canvas.itemconfigure(lineId, state=tk.HIDDEN)
+
         self.quitHandler()
 
 
 class Selection:
-    """ Widget to display a rectangular area on given canvas defined by two points
-        representing its diagonal.
+    """ 
+    Widget to display a rectangular area on given canvas defined by two points
+    representing its diagonal.
     """
     
     def __init__(self, canvas: tk.Canvas, outer_opts):
@@ -101,9 +95,7 @@ class Selection:
         )
 
     def updateCoords(self, d1, d2):
-        """
-        Updates selection area coordinates.
-        """
+        """ Updates selection area coordinates. """
 
         width = self.canvas.cget('width')
         height = self.canvas.cget('height')
@@ -120,9 +112,7 @@ class Selection:
             self.canvas.itemconfigure(rect, state=tk.NORMAL)
 
     def getImage(self):
-        """
-        Returns an image of selected area.
-        """
+        """ Returns an image of selected area. """
         
         coords = self.canvas.coords(self.rects[4])
         return ImageGrab.grab(bbox=coords)
@@ -154,11 +144,19 @@ class ImageCropper():
         MouseTracker(self.canvas).register(self.selection.updateCoords, self.teardown)
 
     def teardown(self):
+        """ Saves the selected area to clipboard and closes the window. """
+        
         save_image_to_clipboard(self.selection.getImage())
         self.window.destroy()
     
     def run(self):
+        """ 
+        Renders the main window and starts up it's event loop.
+        Blocks until the window is closed.
+        """
+        
         self.window.mainloop()
+
 
 if __name__ == '__main__':
     keyboard.add_hotkey('win+ctrl+shift+s', lambda : ImageCropper('PyShot', 'red', ImageGrab.grab()).run())
