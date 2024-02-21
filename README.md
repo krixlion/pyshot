@@ -1,6 +1,6 @@
 # PyShot
 
-This project was created for the subject 'Introduction to programming' at Vistula University.
+This project was created for the 'Introduction to programming' course at Vistula University.
 
 PyShot is an app for creating cropped screenshots of your main display.
 
